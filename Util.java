@@ -1,6 +1,10 @@
 package tk.parmclee.o_droid;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Point;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Environment;
 
@@ -32,5 +36,17 @@ public class Util {
             e.printStackTrace();
         }
     }
-    
+
+    static double associateCoordsWithMap(Location location1, Point point1,
+                                Location location2, Point point2, File mapFile){
+        //Bitmap bmp = BitmapFactory.decodeFile(mapFile.getAbsolutePath());
+        float distance[] = new float[1];
+        Location.distanceBetween(location1.getLatitude(), location1.getLongitude(),
+                                location2.getLatitude(), location2.getLongitude(), distance);
+        int xDistance = point1.x - point2.x;
+        int yDistance = point1.y - point2.y;
+        double pixelDistance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+        double scale = distance[0] / pixelDistance; // meters per pixel
+        return scale;
+    }
 }

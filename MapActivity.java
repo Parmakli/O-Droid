@@ -1,5 +1,6 @@
 package tk.parmclee.o_droid;
 
+import android.graphics.Point;
 import android.location.Criteria;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -11,6 +12,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -88,7 +91,15 @@ public class MapActivity extends AppCompatActivity {
             Toast.makeText(this, "Please turn on gps", Toast.LENGTH_SHORT).show();
         }
 
-        mLine.setText(provider);
+        Location l1 = new Location("gps");
+        l1.setLatitude(44.932191);
+        l1.setLongitude(34.036290);
+        Location l2 = new Location("gps");
+        l2.setLatitude(44.918157);
+        l2.setLongitude(34.037217);
+        Point p1 = new Point(1002, 652);
+        Point p2 = new Point(1330, 3506);
+        mLine.setText(provider + Util.associateCoordsWithMap(l1,p1,l2,p2,new File("dd")));
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Don't sleep");
