@@ -95,11 +95,22 @@ public class MapActivity extends AppCompatActivity {
         l1.setLatitude(44.932191);
         l1.setLongitude(34.036290);
         Location l2 = new Location("gps");
-        l2.setLatitude(44.918157);
-        l2.setLongitude(34.037217);
+        l2.setLatitude(44.917771);
+        l2.setLongitude(34.045132);
         Point p1 = new Point(1002, 652);
-        Point p2 = new Point(1330, 3506);
-        mLine.setText(provider + Util.associateCoordsWithMap(l1,p1,l2,p2,new File("dd")));
+        Point p2 = new Point(2458, 3588);
+        Bundle b = Util.mapAffixment(l1,p1,l2,p2,new File("dd"));
+        double scale = b.getDouble("scale");
+        double scale1 = b.getDouble("scaleLatD");
+        double scale2 = b.getDouble("scaleLonD");
+        double lat = b.getDouble("latitude");
+        double lon = b.getDouble("longitude");
+        Location l = new Location("gps");
+        l.setLatitude(44.926512);
+        l.setLongitude(34.041511);
+        Point p = Util.getPositionOnMap(lat,lon,scale1,scale2,l);
+        mLine.setText(provider + scale + "\nlat:"+lat+"\nlon:"+lon+
+                "\nscale1:"+scale1+"\nscale2:"+scale2+"\nPoint:"+p.x+","+p.y);
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Don't sleep");
