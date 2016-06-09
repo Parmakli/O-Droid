@@ -1,15 +1,18 @@
 package tk.parmclee.o_droid;
 
+import android.content.Intent;
 import android.graphics.Point;
 import android.location.Criteria;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +24,8 @@ public class MapActivity extends AppCompatActivity {
     LocationManager locationManager;
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
+    Uri storageUri;
+    File map;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +33,9 @@ public class MapActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mLine = (TextView) findViewById(R.id.line);
+        assert mLine != null;
+        mLine.setOnClickListener(listener);
+        storageUri = Util.getMapStorageUri(getApplicationContext());
     }
 
     @Override
@@ -90,27 +98,10 @@ public class MapActivity extends AppCompatActivity {
             Log.d("Odr", iae.getMessage());
             Toast.makeText(this, "Please turn on gps", Toast.LENGTH_SHORT).show();
         }
+        map = new File(storageUri.getPath(), "map_womenf_middle.jpg");
+        Bundle getB = testMap(map);
 
-        Location l1 = new Location("gps");
-        l1.setLatitude(44.932191);
-        l1.setLongitude(34.036290);
-        Location l2 = new Location("gps");
-        l2.setLatitude(44.917771);
-        l2.setLongitude(34.045132);
-        Point p1 = new Point(1002, 652);
-        Point p2 = new Point(2458, 3588);
-        Bundle b = Util.mapAffixment(l1,p1,l2,p2,new File("dd"));
-        double scale = b.getDouble("scale");
-        double scale1 = b.getDouble("scaleLatD");
-        double scale2 = b.getDouble("scaleLonD");
-        double lat = b.getDouble("latitude");
-        double lon = b.getDouble("longitude");
-        Location l = new Location("gps");
-        l.setLatitude(44.926512);
-        l.setLongitude(34.041511);
-        Point p = Util.getPositionOnMap(lat,lon,scale1,scale2,l);
-        mLine.setText(provider + scale + "\nlat:"+lat+"\nlon:"+lon+
-                "\nscale1:"+scale1+"\nscale2:"+scale2+"\nPoint:"+p.x+","+p.y);
+        mLine.setText(storageUri.getPath()+getB.toString());
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Don't sleep");
@@ -122,4 +113,33 @@ public class MapActivity extends AppCompatActivity {
         super.onStop();
         wakeLock.release();
     }
+
+    Bundle testMap(File map){
+        Location l1 = new Location("gps"); l1.setLatitude(63.379120); l1.setLongitude(10.316691);
+        Location l2 = new Location("gps"); l2.setLatitude(63.361495); l2.setLongitude(10.297033);
+        Point p1 = new Point(839, 25);
+        Point p2 = new Point(95, 1590);
+        Bundle b = Util.mapAffixment(l1,p1,l2,p2,map);
+        double scale1 = b.getDouble("scaleLat");
+        double scale2 = b.getDouble("scaleLon");
+        double lat = b.getDouble("latitude");
+        double lon = b.getDouble("longitude");
+        Location l = new Location("gps");
+        l.setLatitude(63.366497);
+        l.setLongitude(10.319914);
+        Point p = Util.getPositionOnMap(lat,lon,scale1,scale2,l);
+
+        File f = Util.createAffixmentFile(map, b);
+        return Util.readAffixmentFile(f);
+    }
+
+    View.OnClickListener listener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(getApplicationContext(), AffixmentActivity.class);
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.putExtra("mapPath", map.getAbsolutePath());
+            startActivity(intent);
+        }
+    };
 }

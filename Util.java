@@ -9,13 +9,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 public class Util {
 
-    static Uri getMapStorageUri(Context context){
+    static Uri getMapStorageUri(Context context) {
         File storagePath;
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             storagePath = Environment.getExternalStorageDirectory();
@@ -25,25 +28,28 @@ public class Util {
         return Uri.parse(storagePath.getAbsolutePath());
     }
 
-    static void createTextFile(Uri uri, String name, String text){
+    static File createTextFile(Uri uri, String name, String text) {
         File storage = new File(uri.getPath());
+        storage.mkdirs();
         File file = new File(storage, name);
-        file.mkdirs();
+        if (file.exists()) file.delete();
         try {
-            RandomAccessFile raFile = new RandomAccessFile(file, "rw");
-            raFile.writeUTF(text);
-            raFile.close();
+            file.createNewFile();
+            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+            bw.write(text);
+            bw.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return file;
     }
 
     static Bundle mapAffixment(Location location1, Point point1,
-                                         Location location2, Point point2, File mapFile){
+                               Location location2, Point point2, File mapFile) {
         Bundle result = new Bundle();
-        //Bitmap bmp = BitmapFactory.decodeFile(mapFile.getAbsolutePath());
-        //int width = bmp.getWidth();
-        //int height = bmp.getHeight();
+        Bitmap bmp = BitmapFactory.decodeFile(mapFile.getAbsolutePath());
+        int width = bmp.getWidth();
+        int height = bmp.getHeight();
 
         float distance[] = new float[1];
         double lat1 = location1.getLatitude();
@@ -53,28 +59,25 @@ public class Util {
         Location.distanceBetween(lat1, lon1, lat2, lon2, distance);
         int xDistance = point1.x - point2.x;
         int yDistance = point1.y - point2.y;
-        double pixelDistance = Math.hypot(xDistance, yDistance);
-        double scaleM = distance[0] / pixelDistance; // meters per pixel
-        double scaleLatitudeDegrees = (lat2 - lat1) / yDistance; //  degrees per pxl
-        double scaleLongitudeDegrees = (lon2 - lon1) / xDistance; //  degrees per pxl
+        double scaleLatitudeDegrees = Math.abs((lat2 - lat1) / yDistance); //  degrees per pixel
+        double scaleLongitudeDegrees = Math.abs((lon2 - lon1) / xDistance); //  degrees per pixel
 
-        // left+top == west+north
+        // left+top == west+north corner location
         // pixels increase from top to bottom (opposite to latitude)
-        double latitude = lat1 + point1.y * Math.abs(scaleLatitudeDegrees);
+        double latitude = lat1 + point1.y * scaleLatitudeDegrees;
         // pixels increase from left to right (like longitude)
-        double longitude = lon1 - point1.x * Math.abs(scaleLongitudeDegrees);
-        //result.putInt("width", width);
-        //result.putInt("height", height);
-        result.putDouble("scale", scaleM);
-        result.putDouble("scaleLatD", Math.abs(scaleLatitudeDegrees));
-        result.putDouble("scaleLonD", Math.abs(scaleLongitudeDegrees));
+        double longitude = lon1 - point1.x * scaleLongitudeDegrees;
+        result.putInt("width", width);
+        result.putInt("height", height);
+        result.putDouble("scaleLat", scaleLatitudeDegrees);
+        result.putDouble("scaleLon", scaleLongitudeDegrees);
         result.putDouble("latitude", latitude);
         result.putDouble("longitude", longitude);
         return result;
     }
 
     static Point getPositionOnMap(double startLatitude, double startLongitude,
-                                  double scaleLatD, double scaleLonD, Location location){
+                                  double scaleLatD, double scaleLonD, Location location) {
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         // left+top == startL..itude
@@ -84,5 +87,57 @@ public class Util {
         int y = (int) (latOffset / scaleLatD);
         int x = (int) (lonOffset / scaleLonD);
         return new Point(x, y); //handle x,y < 0 or > w,h after return
+    }
+
+    static File createAffixmentFile(File file, Bundle data) {
+        String fileName = file.getName();
+        String textFileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".txt");
+        File directory = file.getParentFile();
+
+        String content = "AUTO-GENERATED FILE. Please don't modify this.\nThis file was generated " +
+                "by O-Droid app.\nDon't modify it by hand. Use O-Droid.\n***********************\n";
+        int width = data.getInt("width");
+        int height = data.getInt("height");
+        content += fileName + " resolution: " + width + "x" + height + "\n";
+        String latitude = "Left top corner latitude: " + data.getDouble("latitude");
+        String longitude = "Left top corner longitude: " + data.getDouble("longitude");
+        content += latitude + "\n" + longitude + "\n";
+        String latDegrees = "Latitude degrees per pixel: " + data.getDouble("scaleLat");
+        String lonDegrees = "Longitude degrees per pixel: " + data.getDouble("scaleLon");
+        content += latDegrees + "\n" + lonDegrees + "\n";
+
+        return createTextFile(Uri.fromFile(directory), textFileName, content);
+    }
+
+    static Bundle readAffixmentFile(File file) {
+        Bundle result = new Bundle();
+        String line;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            do {
+                line = br.readLine();
+            } while (!line.contains("***"));
+            line = br.readLine(); //goto resolution line
+            String w = line.substring(line.lastIndexOf(":") + 2, line.lastIndexOf("x"));
+            String h = line.substring(line.lastIndexOf("x") + 1);
+            result.putInt("width", Integer.valueOf(w));
+            result.putInt("height", Integer.valueOf(h));
+            line = br.readLine(); //latitude line
+            String lat = line.substring(line.lastIndexOf(":") + 2);
+            result.putDouble("latitude", Double.valueOf(lat));
+            line = br.readLine(); //longitude line
+            String lon = line.substring(line.lastIndexOf(":") + 2);
+            result.putDouble("longitude", Double.valueOf(lon));
+            line = br.readLine(); //latitude scale line
+            String scaleLat = line.substring(line.lastIndexOf(":") + 2);
+            result.putDouble("scaleLat", Double.valueOf(scaleLat));
+            line = br.readLine(); //longitude scale line
+            String scaleLon = line.substring(line.lastIndexOf(":") + 2);
+            result.putDouble("scaleLon", Double.valueOf(scaleLon));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return result;
     }
 }
