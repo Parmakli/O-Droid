@@ -99,9 +99,11 @@ public class MapActivity extends AppCompatActivity {
             Toast.makeText(this, "Please turn on gps", Toast.LENGTH_SHORT).show();
         }
         map = new File(storageUri.getPath(), "map_womenf_middle.jpg");
-        Bundle getB = testMap(map);
+        Bundle getB = null;
+        if (map.exists()) getB = testMap(map);
+        else Toast.makeText(getApplicationContext(), "Bundle null", Toast.LENGTH_LONG).show();
 
-        mLine.setText(storageUri.getPath()+getB.toString());
+        mLine.setText(storageUri.getPath());
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Don't sleep");
@@ -115,21 +117,28 @@ public class MapActivity extends AppCompatActivity {
     }
 
     Bundle testMap(File map){
-        Location l1 = new Location("gps"); l1.setLatitude(63.379120); l1.setLongitude(10.316691);
-        Location l2 = new Location("gps"); l2.setLatitude(63.361495); l2.setLongitude(10.297033);
+        //Location l1 = new Location("gps"); l1.setLatitude(63.379120); l1.setLongitude(10.316691);
+        //Location l2 = new Location("gps"); l2.setLatitude(63.361495); l2.setLongitude(10.297033);
         Point p1 = new Point(839, 25);
         Point p2 = new Point(95, 1590);
-        Bundle b = Util.mapAffixment(l1,p1,l2,p2,map);
-        double scale1 = b.getDouble("scaleLat");
-        double scale2 = b.getDouble("scaleLon");
-        double lat = b.getDouble("latitude");
-        double lon = b.getDouble("longitude");
-        Location l = new Location("gps");
-        l.setLatitude(63.366497);
-        l.setLongitude(10.319914);
-        Point p = Util.getPositionOnMap(lat,lon,scale1,scale2,l);
-
-        File f = Util.createAffixmentFile(map, b);
+        //Bundle b = Util.mapAffixment(l1,p1,l2,p2,map);
+        double scale1 = 0.0000012;//b.getDouble("scaleLat");
+        double scale2 = 0.0000024;//b.getDouble("scaleLon");
+        double lat = 63.379120;// b.getDouble("latitude");
+        double lon = 10.316691;//b.getDouble("longitude");
+        //Location l = new Location("gps");
+        //l.setLatitude(63.366497);
+        //l.setLongitude(10.319914);
+        //Point p = Util.getPositionOnMap(lat,lon,scale1,scale2,l);
+        Bundle b = new Bundle();
+        b.putDouble("scaleLat", scale1);
+        b.putDouble("scaleLon", scale2);
+        b.putDouble("latitude", lat);
+        b.putDouble("longitude", lon);
+        b.putInt("width", 2292);
+        b.putInt("height", 2008);
+        File f;
+        f = Util.createAffixmentFile(map, b);
         return Util.readAffixmentFile(f);
     }
 
