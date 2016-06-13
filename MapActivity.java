@@ -34,7 +34,7 @@ public class MapActivity extends AppCompatActivity {
 
         mLine = (TextView) findViewById(R.id.line);
         assert mLine != null;
-        mLine.setOnClickListener(listener);
+        mLine.setOnClickListener(onClickListener);
         storageUri = Util.getMapStorageUri(getApplicationContext());
     }
 
@@ -50,46 +50,8 @@ public class MapActivity extends AppCompatActivity {
         String provider = locationManager.getBestProvider(criteria, true);
 
         try {
-            locationManager.addGpsStatusListener(new GpsStatus.Listener() {
-                @Override
-                public void onGpsStatusChanged(int event) {
-                    switch (event) {
-                        case GpsStatus.GPS_EVENT_FIRST_FIX:
-                            Log.d("Odr", "first fix");
-                            break;
-                        case GpsStatus.GPS_EVENT_STARTED:
-                            Log.d("Odr", "started");
-                            break;
-                        case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-                            Log.d("Odr", "sat status");
-                            break;
-                        case GpsStatus.GPS_EVENT_STOPPED:
-                            Log.d("Odr", "stopped");
-                            break;
-                    }
-                }
-            });
-            locationManager.requestLocationUpdates(provider, 1, 1, new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    Log.d("Odr", "location changed:"+location.getLatitude()+","+location.getLongitude());
-                }
-
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-                    Log.d("Odr", provider + " status changed:"+status);
-                }
-
-                @Override
-                public void onProviderEnabled(String provider) {
-                    Log.d("Odr", provider + " enabled");
-                }
-
-                @Override
-                public void onProviderDisabled(String provider) {
-                    Log.d("Odr", provider + " disabled");
-                }
-            });
+            locationManager.addGpsStatusListener(gpsStatusListener);
+            locationManager.requestLocationUpdates(provider, 1, 1, locationListener);
         } catch (SecurityException e) {
             e.printStackTrace();
             Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
@@ -114,6 +76,16 @@ public class MapActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         wakeLock.release();
+    }
+
+    public void quit(View v){
+        try {
+            locationManager.removeUpdates(locationListener);
+            locationManager.removeGpsStatusListener(gpsStatusListener);
+        } catch (SecurityException se) {
+            se.printStackTrace();
+        }
+        finish();
     }
 
     Bundle testMap(File map){
@@ -142,13 +114,55 @@ public class MapActivity extends AppCompatActivity {
         return Util.readAffixmentFile(f);
     }
 
-    View.OnClickListener listener = new View.OnClickListener() {
+    View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), AffixmentActivity.class);
             intent.setAction(Intent.ACTION_VIEW);
             intent.putExtra("mapPath", map.getAbsolutePath());
             startActivity(intent);
+        }
+    };
+
+    GpsStatus.Listener gpsStatusListener = new GpsStatus.Listener() {
+        @Override
+        public void onGpsStatusChanged(int event) {
+            switch (event) {
+                case GpsStatus.GPS_EVENT_FIRST_FIX:
+                    Log.d("Odr", "first fix");
+                    break;
+                case GpsStatus.GPS_EVENT_STARTED:
+                    Log.d("Odr", "started");
+                    break;
+                case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
+                    Log.d("Odr", "sat status");
+                    break;
+                case GpsStatus.GPS_EVENT_STOPPED:
+                    Log.d("Odr", "stopped");
+                    break;
+            }
+        }
+    };
+
+    LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            Log.d("Odr", "location changed:"+location.getLatitude()+","+location.getLongitude());
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+            Log.d("Odr", provider + " status changed:"+status);
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+            Log.d("Odr", provider + " enabled");
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+            Log.d("Odr", provider + " disabled");
         }
     };
 }
