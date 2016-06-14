@@ -62,8 +62,8 @@ public class MapActivity extends AppCompatActivity {
         }
         map = new File(storageUri.getPath(), "map_womenf_middle.jpg");
         Bundle getB = null;
-        if (map.exists()) getB = testMap(map);
-        else Toast.makeText(getApplicationContext(), "Bundle null", Toast.LENGTH_LONG).show();
+        //if (map.exists()) getB = testMap(map);
+        //else Toast.makeText(getApplicationContext(), "Bundle null", Toast.LENGTH_LONG).show();
 
         mLine.setText(storageUri.getPath());
 
@@ -107,11 +107,11 @@ public class MapActivity extends AppCompatActivity {
         b.putDouble("scaleLon", scale2);
         b.putDouble("latitude", lat);
         b.putDouble("longitude", lon);
-        b.putInt("width", 2292);
+        b.putInt("width", 1146);
         b.putInt("height", 2008);
         File f;
         f = Util.createAffixmentFile(map, b);
-        return Util.readAffixmentFile(f);
+        return Util.readAffixmentFile(f, this);
     }
 
     View.OnClickListener onClickListener = new View.OnClickListener() {

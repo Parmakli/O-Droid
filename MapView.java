@@ -51,8 +51,11 @@ public class MapView extends View {
         mLeftTop = new PointF(0, 0);
         mRightBottom = new PointF(width, height);
         iMatrix = new Matrix();
-        mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
-        mScrollDetector = new GestureDetector(context, new ScrollListener());
+    }
+
+    void addListeners(GestureDetector gesture, ScaleGestureDetector scale){
+        mScaleDetector = scale;
+        mScrollDetector = gesture;
     }
 
     @Override
@@ -98,8 +101,7 @@ public class MapView extends View {
         Log.d("Odr", iMatrix + "\ncenter: " + mCenter.x + "," + mCenter.y +
                 "\nlt: " + mLeftTop.x + "," + mLeftTop.y +
                 "\nrb: " + mRightBottom.x + "," + mRightBottom.y);
-        if (testView != null) testView.setText(getCenter());
-
+        if (testView != null) testView.setText(getCenterString());
     }
 
     @SuppressWarnings("deprecation")
@@ -117,53 +119,27 @@ public class MapView extends View {
         return p;
     }
 
-    String getCenter() {
-        return "{" + (int) mCenter.x + "," + (int) mCenter.y + "}\n"+mScaleFactor;
+    String getCenterString() {
+        return "{" + (int) mCenter.x + "," + (int) mCenter.y + "}\n"+
+                "{" + (int) (mLeftTop.x + mScreenSize.x/2 / mScaleFactor) + "," +
+                (int) (mLeftTop.y + mScreenSize.y/2 / mScaleFactor) + "}\n"+
+                "{" + (int) (mRightBottom.x - mScreenSize.x/2 / mScaleFactor) + "," +
+                (int) (mRightBottom.y - mScreenSize.y/2 / mScaleFactor)+ "}";
+    }
+
+    /**
+     *
+     * @param point pixels of the screen
+     * @return pixels on the map
+     */
+
+    PointF getPointOnMap(PointF point){
+        return new PointF(mLeftTop.x + point.x / mScaleFactor, mLeftTop.y + point.y / mScaleFactor);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        //canvas.save();
-        //canvas.scale(mScaleFactor, mScaleFactor);
         canvas.drawBitmap(mBmp, mMatrix, null);
-        //canvas.restore();
     }
 
-    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
-            float factor = detector.getScaleFactor();
-            if (mScaleFactor * factor > mMinFactor && mScaleFactor * factor < 10 * mMinFactor) {
-                float x = detector.getFocusX();
-                float y = detector.getFocusY();
-                mScaleFactor *= factor;
-                mMatrix.postScale(factor, factor);
-                mMatrix.postTranslate(x * (1 - factor), y * (1 - factor));
-                transformCoords(mMatrix);
-                invalidate();
-            }
-            Log.d("Odr", "scaleListener");
-            return true;
-        }
-    }
-
-    private class ScrollListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            float dx = -distanceX;
-            float dy = -distanceY;
-            Log.d("Odr", "Initial dx " + dx + " dy " + dy +
-                    "\nlt: " + mLeftTop.x + "," + mLeftTop.y +
-                    "\nrb: " + mRightBottom.x + "," + mRightBottom.y);
-            if ((mLeftTop.x - dx) < 0) dx = mLeftTop.x;
-            if ((mRightBottom.x - dx) > mMapSize.x) dx = mRightBottom.x - mMapSize.x;
-            if ((mLeftTop.y - dy) < 0) dy = mLeftTop.y;
-            if ((mRightBottom.y - dy) > mMapSize.y) dy = mRightBottom.y - mMapSize.y;
-            Log.d("Odr", "dx " + dx + " dy " + dy);
-            mMatrix.postTranslate(dx, dy);
-            transformCoords(mMatrix);
-            invalidate();//TODO handle borders of translation
-            return true;
-        }
-    }
 }

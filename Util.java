@@ -4,10 +4,12 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -44,21 +46,19 @@ public class Util {
         return file;
     }
 
-    static Bundle mapAffixment(Location location1, Point point1,
-                               Location location2, Point point2, File mapFile) {
+    static Bundle mapAffixment(PointF location1, PointF point1,
+                               PointF location2, PointF point2, File mapFile) {
         Bundle result = new Bundle();
         Bitmap bmp = BitmapFactory.decodeFile(mapFile.getAbsolutePath());
         int width = bmp.getWidth();
         int height = bmp.getHeight();
 
-        float distance[] = new float[1];
-        double lat1 = location1.getLatitude();
-        double lon1 = location1.getLongitude();
-        double lat2 = location2.getLatitude();
-        double lon2 = location2.getLongitude();
-        Location.distanceBetween(lat1, lon1, lat2, lon2, distance);
-        int xDistance = point1.x - point2.x;
-        int yDistance = point1.y - point2.y;
+        float lat1 = location1.y;
+        float lon1 = location1.x;
+        float lat2 = location2.y;
+        float lon2 = location2.x;
+        float xDistance = point1.x - point2.x;
+        float yDistance = point1.y - point2.y;
         double scaleLatitudeDegrees = Math.abs((lat2 - lat1) / yDistance); //  degrees per pixel
         double scaleLongitudeDegrees = Math.abs((lon2 - lon1) / xDistance); //  degrees per pixel
 
@@ -94,7 +94,7 @@ public class Util {
         String textFileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".txt");
         File directory = file.getParentFile();
 
-        String content = "AUTO-GENERATED FILE. Please don't modify this.\nThis file was generated " +
+        String content = "AUTO-GENERATED FILE. Please don't modify this.\nThis file was generated "+
                 "by O-Droid app.\nDon't modify it by hand. Use O-Droid.\n***********************\n";
         int width = data.getInt("width");
         int height = data.getInt("height");
@@ -109,7 +109,11 @@ public class Util {
         return createTextFile(Uri.fromFile(directory), textFileName, content);
     }
 
-    static Bundle readAffixmentFile(File file) {
+    static Bundle readAffixmentFile(File file, Context context) {
+        if (!file.exists()){
+            Toast.makeText(context, R.string.no_file, Toast.LENGTH_SHORT).show();
+            return null;
+        }
         Bundle result = new Bundle();
         String line;
         try {
