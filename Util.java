@@ -94,8 +94,8 @@ public class Util {
         String textFileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".txt");
         File directory = file.getParentFile();
 
-        String content = "AUTO-GENERATED FILE. Please don't modify this.\nThis file was generated "+
-                "by O-Droid app.\nDon't modify it by hand. Use O-Droid.\n***********************\n";
+        String content = "AUTO-GENERATED FILE. Please don't modify this.\nThis file was generated "
+                + "by O-Droid app.\nDon't modify it by hand. Use O-Droid.\n*********************\n";
         int width = data.getInt("width");
         int height = data.getInt("height");
         content += fileName + " resolution: " + width + "x" + height + "\n";
@@ -110,7 +110,7 @@ public class Util {
     }
 
     static Bundle readAffixmentFile(File file, Context context) {
-        if (!file.exists()){
+        if (!file.exists()) {
             Toast.makeText(context, R.string.no_file, Toast.LENGTH_SHORT).show();
             return null;
         }
