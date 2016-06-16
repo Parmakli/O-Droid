@@ -67,7 +67,6 @@ public class AffixmentActivity extends AppCompatActivity {
         quitBtn.bringToFront();
         mImage.setTestView(text);
 
-        Log.d("Odr", "onCreate");
         Log.d("Odr", mapPath);
     }
 

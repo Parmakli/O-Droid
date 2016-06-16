@@ -1,7 +1,9 @@
 package tk.parmclee.o_droid;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -14,6 +16,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 public class StartActivity extends AppCompatActivity {
+
+    static Uri sStorageUri;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -31,6 +35,7 @@ public class StartActivity extends AppCompatActivity {
         initialize(explore, R.drawable.explore);
         initialize(compete, R.drawable.competition);
         initialize(affix, R.drawable.affix);
+        sStorageUri = Util.getMapStorageUri(getApplicationContext());
     }
 
     private void initialize(ImageView view, int id){
@@ -38,19 +43,26 @@ public class StartActivity extends AppCompatActivity {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.RGB_565;
         Bitmap bm = BitmapFactory.decodeResource(getResources(), id, options);
-        view.setImageBitmap(bm);//TODO bitmap as background
-
+        view.setScaleType(ImageView.ScaleType.FIT_XY);
+        view.setImageBitmap(bm);
     }
 
     View.OnClickListener listener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            Intent intent = new Intent(getApplicationContext(), MapList.class);
             switch (v.getId()){
                 case R.id.explore:
+                    intent.putExtra("type", "explore");
+                    startActivity(intent);
                     break;
                 case R.id.compete:
+                    intent.putExtra("type", "competition");
+                    startActivity(intent);
                     break;
                 case R.id.affix:
+                    intent.putExtra("type", "affixment");
+                    startActivity(intent);
                     break;
                 default:
             }
