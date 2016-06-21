@@ -27,11 +27,6 @@ public class MapView extends View {
     Matrix mMatrix, iMatrix; // "i" means initial or inverse
     ScaleGestureDetector mScaleDetector;
     GestureDetector mScrollDetector;
-    TextView testView;
-
-    void setTestView(TextView tv) {
-        testView = tv;
-    }
 
     public MapView(Context context) {
         super(context);
@@ -58,10 +53,18 @@ public class MapView extends View {
         mScrollDetector = gesture;
     }
 
+    void releaseScaleListener(){
+        mScaleDetector = null;
+    }
+
+    void releaseScrollListener(){
+        mScrollDetector = null;
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        mScaleDetector.onTouchEvent(event);
-        mScrollDetector.onTouchEvent(event);
+        if (mScrollDetector != null) mScrollDetector.onTouchEvent(event);
+        if (mScaleDetector != null) mScaleDetector.onTouchEvent(event);
         return true;
     }
 
@@ -72,8 +75,6 @@ public class MapView extends View {
         float wRatio = ((float) mScreenSize.x) / ((float) mMapSize.x);
         float hRatio = ((float) mScreenSize.y) / ((float) mMapSize.y);
         mMinFactor = mScaleFactor = Math.max(wRatio, hRatio);
-        Log.d("Odr", "onAttach\n" + iMatrix.toString() + mScaleFactor + "\n" + wRatio + "\n" + hRatio +
-                "\nMapSize" + mMapSize.x + "," + mMapSize.y);
         iMatrix.setScale(mScaleFactor, mScaleFactor);
 
         //calculating new center position
@@ -97,11 +98,6 @@ public class MapView extends View {
         mCenter.set(pts[0], pts[1]);
         mLeftTop.set(pts[2], pts[3]);
         mRightBottom.set(pts[4], pts[5]);
-        Log.d("Odr", matrix.toString());
-        Log.d("Odr", iMatrix + "\ncenter: " + mCenter.x + "," + mCenter.y +
-                "\nlt: " + mLeftTop.x + "," + mLeftTop.y +
-                "\nrb: " + mRightBottom.x + "," + mRightBottom.y);
-        if (testView != null) testView.setText(getCenterString());
     }
 
     @SuppressWarnings("deprecation")
@@ -117,14 +113,6 @@ public class MapView extends View {
             p.y = display.getHeight();
         }
         return p;
-    }
-
-    String getCenterString() {
-        return "{" + (int) mCenter.x + "," + (int) mCenter.y + "}\n"+
-                "{" + (int) (mLeftTop.x + mScreenSize.x/2 / mScaleFactor) + "," +
-                (int) (mLeftTop.y + mScreenSize.y/2 / mScaleFactor) + "}\n"+
-                "{" + (int) (mRightBottom.x - mScreenSize.x/2 / mScaleFactor) + "," +
-                (int) (mRightBottom.y - mScreenSize.y/2 / mScaleFactor)+ "}";
     }
 
     /**

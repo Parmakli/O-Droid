@@ -34,85 +34,29 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
-public class AffixmentActivity extends AppCompatActivity {
+public class AffixmentActivity extends MapActivity {
 
-    MapView mImage;
-    RelativeLayout mLayout;
-    String mapPath;
     File affixmentFile;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.affixment);
         mLayout = (RelativeLayout) findViewById(R.id.layoutAffixment);
-        mapPath = getIntent().getStringExtra("mapPath");
-        mImage = new MapView(getApplicationContext(), mapPath);
-        mImage.addListeners(new GestureDetector(getApplicationContext(), new ScrollListener()),
+        mImage.addListeners(
+                new GestureDetector(getApplicationContext(), new ScrollAndLongPressListener()),
                 new ScaleGestureDetector(getApplicationContext(), new ScaleListener()));
         assert mLayout != null;
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         mLayout.addView(mImage, params);
 
-        TextView text = (TextView) findViewById(R.id.text);
-        assert text != null;
-        text.setTextColor(Color.BLACK);
-        text.bringToFront();
-
         ImageButton quitBtn = (ImageButton) findViewById(R.id.quitBtn);
         assert quitBtn != null;
         quitBtn.bringToFront();
-        mImage.setTestView(text);
-
-        Log.d("Odr", mapPath);
     }
 
-    public void quit(View v) {
-        finish();
-    }
-
-    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
-            float factor = detector.getScaleFactor();
-            if (mImage.mScaleFactor * factor > mImage.mMinFactor &&
-                    mImage.mScaleFactor * factor < 10 * mImage.mMinFactor) {
-                float x = detector.getFocusX();
-                float y = detector.getFocusY();
-                mImage.mScaleFactor *= factor;
-                mImage.mMatrix.postScale(factor, factor);
-                mImage.mMatrix.postTranslate(x * (1 - factor), y * (1 - factor));
-                mImage.transformCoords(mImage.mMatrix);
-                mImage.invalidate();
-            }
-            return true;
-        }
-    }
-
-    private class ScrollListener extends GestureDetector.SimpleOnGestureListener {
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            float dx = -distanceX;
-            float dy = -distanceY;
-            Log.d("Odr", "Initial dx " + dx + " dy " + dy +
-                    "\nlt: " + mImage.mLeftTop.x + "," + mImage.mLeftTop.y +
-                    "\nrb: " + mImage.mRightBottom.x + "," + mImage.mRightBottom.y);
-            if ((mImage.mLeftTop.x - dx) < 0) dx = mImage.mLeftTop.x;
-            if ((mImage.mRightBottom.x - dx) > mImage.mMapSize.x)
-                dx = mImage.mRightBottom.x - mImage.mMapSize.x;
-            if ((mImage.mLeftTop.y - dy) < 0) dy = mImage.mLeftTop.y;
-            if ((mImage.mRightBottom.y - dy) > mImage.mMapSize.y)
-                dy = mImage.mRightBottom.y - mImage.mMapSize.y;
-            Log.d("Odr", "dx " + dx + " dy " + dy);
-            mImage.mMatrix.postTranslate(dx, dy);
-            mImage.transformCoords(mImage.mMatrix);
-            mImage.invalidate();
-            return true;
-        }
-
+    class ScrollAndLongPressListener extends ScrollListener {
         @Override
         public void onLongPress(MotionEvent e) {
             ImageView imageView = new ImageView(getApplicationContext());
@@ -127,7 +71,6 @@ public class AffixmentActivity extends AppCompatActivity {
             params.leftMargin = (int) (x - dp / 2);
             params.topMargin = (int) (y - dp);
             mLayout.addView(imageView, params);
-            Log.d("Odr", "longPress");
             createDialog(imageView, x, y);
         }
 

@@ -1,7 +1,5 @@
 package tk.parmclee.o_droid;
 
-import android.content.Intent;
-import android.graphics.Point;
 import android.location.Criteria;
 import android.location.GpsStatus;
 import android.location.Location;
@@ -12,30 +10,33 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.widget.TextView;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
-
-import java.io.File;
 
 public class MapActivity extends AppCompatActivity {
 
-    TextView mLine;
+    MapView mImage;
+    RelativeLayout mLayout;
+    String mapPath;
     LocationManager locationManager;
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
     Uri storageUri;
-    File map;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        mLine = (TextView) findViewById(R.id.line);
-        assert mLine != null;
-        mLine.setOnClickListener(onClickListener);
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         storageUri = Util.getMapStorageUri(getApplicationContext());
+        mapPath = getIntent().getStringExtra("mapPath");
+        mImage = new MapView(getApplicationContext(), mapPath);
     }
 
     @Override
@@ -60,12 +61,6 @@ public class MapActivity extends AppCompatActivity {
             Log.d("Odr", iae.getMessage());
             Toast.makeText(this, "Please turn on gps", Toast.LENGTH_SHORT).show();
         }
-        map = new File(storageUri.getPath(), "map_womenf_middle.jpg");
-        Bundle getB = null;
-        //if (map.exists()) getB = testMap(map);
-        //else Toast.makeText(getApplicationContext(), "Bundle null", Toast.LENGTH_LONG).show();
-
-        mLine.setText(storageUri.getPath());
 
         powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Don't sleep");
@@ -79,6 +74,7 @@ public class MapActivity extends AppCompatActivity {
     }
 
     public void quit(View v){
+        if (locationManager != null)
         try {
             locationManager.removeUpdates(locationListener);
             locationManager.removeGpsStatusListener(gpsStatusListener);
@@ -87,42 +83,6 @@ public class MapActivity extends AppCompatActivity {
         }
         finish();
     }
-
-    Bundle testMap(File map){
-        //Location l1 = new Location("gps"); l1.setLatitude(63.379120); l1.setLongitude(10.316691);
-        //Location l2 = new Location("gps"); l2.setLatitude(63.361495); l2.setLongitude(10.297033);
-        Point p1 = new Point(839, 25);
-        Point p2 = new Point(95, 1590);
-        //Bundle b = Util.mapAffixment(l1,p1,l2,p2,map);
-        double scale1 = 0.0000012;//b.getDouble("scaleLat");
-        double scale2 = 0.0000024;//b.getDouble("scaleLon");
-        double lat = 63.379120;// b.getDouble("latitude");
-        double lon = 10.316691;//b.getDouble("longitude");
-        //Location l = new Location("gps");
-        //l.setLatitude(63.366497);
-        //l.setLongitude(10.319914);
-        //Point p = Util.getPositionOnMap(lat,lon,scale1,scale2,l);
-        Bundle b = new Bundle();
-        b.putDouble("scaleLat", scale1);
-        b.putDouble("scaleLon", scale2);
-        b.putDouble("latitude", lat);
-        b.putDouble("longitude", lon);
-        b.putInt("width", 1146);
-        b.putInt("height", 2008);
-        File f;
-        f = Util.createAffixmentFile(map, b);
-        return Util.readAffixmentFile(f, this);
-    }
-
-    View.OnClickListener onClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Intent intent = new Intent(getApplicationContext(), AffixmentActivity.class);
-            intent.setAction(Intent.ACTION_VIEW);
-            intent.putExtra("mapPath", map.getAbsolutePath());
-            startActivity(intent);
-        }
-    };
 
     GpsStatus.Listener gpsStatusListener = new GpsStatus.Listener() {
         @Override
@@ -165,4 +125,41 @@ public class MapActivity extends AppCompatActivity {
             Log.d("Odr", provider + " disabled");
         }
     };
+
+
+    class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            float factor = detector.getScaleFactor();
+            if (mImage.mScaleFactor * factor > mImage.mMinFactor &&
+                    mImage.mScaleFactor * factor < 10 * mImage.mMinFactor) {
+                float x = detector.getFocusX();
+                float y = detector.getFocusY();
+                mImage.mScaleFactor *= factor;
+                mImage.mMatrix.postScale(factor, factor);
+                mImage.mMatrix.postTranslate(x * (1 - factor), y * (1 - factor));
+                mImage.transformCoords(mImage.mMatrix);
+                mImage.invalidate();
+            }
+            return true;
+        }
+    }
+
+    class ScrollListener extends GestureDetector.SimpleOnGestureListener {
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            float dx = -distanceX;
+            float dy = -distanceY;
+            if ((mImage.mLeftTop.x - dx) < 0) dx = mImage.mLeftTop.x;
+            if ((mImage.mRightBottom.x - dx) > mImage.mMapSize.x)
+                dx = mImage.mRightBottom.x - mImage.mMapSize.x;
+            if ((mImage.mLeftTop.y - dy) < 0) dy = mImage.mLeftTop.y;
+            if ((mImage.mRightBottom.y - dy) > mImage.mMapSize.y)
+                dy = mImage.mRightBottom.y - mImage.mMapSize.y;
+            mImage.mMatrix.postTranslate(dx, dy);
+            mImage.transformCoords(mImage.mMatrix);
+            mImage.invalidate();
+            return true;
+        }
+    }
 }

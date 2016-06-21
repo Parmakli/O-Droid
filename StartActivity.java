@@ -51,6 +51,7 @@ public class StartActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), MapList.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
             switch (v.getId()){
                 case R.id.explore:
                     intent.putExtra("type", "explore");
@@ -81,7 +82,8 @@ public class StartActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Toast.makeText(this, "yes",Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(getApplicationContext(), Preferences.class);
+        startActivity(intent);
         return true;
     }
 }

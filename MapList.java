@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapList extends AppCompatActivity {//TODO remove from stack
+public class MapList extends AppCompatActivity {
     String whatNext;
 
     @Override
@@ -35,9 +35,9 @@ public class MapList extends AppCompatActivity {//TODO remove from stack
         File maps[] = mapStorage.listFiles(filterMime("image/jpeg", "image/png", "image/gif"));
         int quantity = maps.length;
         File affixments[] = mapStorage.listFiles(filterMime("text/plain"));
-        ArrayList <String> affixNames = new ArrayList<>(affixments.length);
+        ArrayList<String> affixNames = new ArrayList<>(affixments.length);
         for (int i = 0; i < quantity; i++) affixNames.add(reduceExtension(affixments[i].getName()));
-        ArrayList<Map<String,String>> data = new ArrayList<>(quantity);
+        ArrayList<Map<String, String>> data = new ArrayList<>(quantity);
         Map<String, String> map;
         for (File mapFile : maps) {
             map = new HashMap<>();
@@ -50,18 +50,17 @@ public class MapList extends AppCompatActivity {//TODO remove from stack
         String from[] = {"map", "affixment"};
         int to[] = {R.id.text1, R.id.text2};
         ListAdapter adapter = new SimpleAdapter(this, data, R.layout.map_list_item, from, to);
-        ListView lv = (ListView) findViewById(R.id.list);
         TextView empty = (TextView) findViewById(R.id.empty);
         if (data.isEmpty() && empty != null) empty.setVisibility(View.VISIBLE);
+        ListView lv = (ListView) findViewById(R.id.list);
         if (lv != null) {
             lv.setAdapter(adapter);
             lv.setOnItemClickListener(listener);
         }
         whatNext = getIntent().getStringExtra("type");
-
     }
 
-        String reduceExtension(String fileName){
+    String reduceExtension(String fileName) {
         return fileName.substring(0, fileName.lastIndexOf("."));
     }
 
@@ -89,7 +88,7 @@ public class MapList extends AppCompatActivity {//TODO remove from stack
     AdapterView.OnItemClickListener listener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            switch (whatNext){
+            switch (whatNext) {
                 case "affixment":
                     Intent intent = new Intent(getApplicationContext(), AffixmentActivity.class);
                     TextView tv = (TextView) view.findViewById(R.id.text1);
