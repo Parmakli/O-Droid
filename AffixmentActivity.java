@@ -4,35 +4,27 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
-import java.lang.reflect.Array;
-import java.util.Arrays;
 
 public class AffixmentActivity extends MapActivity {
 
@@ -42,6 +34,8 @@ public class AffixmentActivity extends MapActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.affixment);
+        removeGPS();
+
         mLayout = (RelativeLayout) findViewById(R.id.layoutAffixment);
         mImage.addListeners(
                 new GestureDetector(getApplicationContext(), new ScrollAndLongPressListener()),
@@ -104,10 +98,11 @@ public class AffixmentActivity extends MapActivity {
                             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
                                     getApplicationContext());
                             if (preferences.getFloat("lat1", 0) == 0) {
+                                PointF point1 = mImage.getPointOnMap(new PointF(x, y));
                                 preferences.edit().putFloat("lat1", latitude)
                                         .putFloat("lon1", longitude)
-                                        .putFloat("x1", x)
-                                        .putFloat("y1", y).apply();
+                                        .putFloat("x1", point1.x)
+                                        .putFloat("y1", point1.y).apply();
                                 Toast.makeText(getApplicationContext(), R.string.success_1_point,
                                         Toast.LENGTH_SHORT).show();
                                 dialog.dismiss();
@@ -116,20 +111,19 @@ public class AffixmentActivity extends MapActivity {
                                 float lon1 = preferences.getFloat("lon1", 0);
                                 float x1 = preferences.getFloat("x1", 0);
                                 float y1 = preferences.getFloat("y1", 0);
-                                PointF point1 = mImage.getPointOnMap(new PointF(x1, y1));
+                                PointF point1 = new PointF(x1, y1);
                                 PointF point2 = mImage.getPointOnMap(new PointF(x, y));
                                 File mapFile = new File(mapPath);
-                                Bundle data = Util.mapAffixment(new PointF(lon1, lat1), point1,
-                                        new PointF(longitude, latitude), point2, mapFile);
+                                Bundle data = Util.mapAffixment(new PointF(lat1, lon1), point1,
+                                        new PointF(latitude, longitude), point2, mapFile);
                                 Log.d("Odr", data.toString());
                                 affixmentFile = Util.createAffixmentFile(mapFile, data);
                                 Toast.makeText(getApplicationContext(), R.string.success_2_point,
                                         Toast.LENGTH_SHORT).show();
-                                Toast.makeText(getApplicationContext(), R.string.success_affixment,
-                                        Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), R.string.success_affixment + " "
+                                        + data.getInt("quality")+" %", Toast.LENGTH_LONG).show();
                                 preferences.edit().putFloat("lat1", 0).putFloat("lon1", 0)
                                         .putFloat("x1", 0).putFloat("y1", 0).apply();
-                                testAffixment();
                                 dialog.dismiss();
                             }
                         }
@@ -140,22 +134,18 @@ public class AffixmentActivity extends MapActivity {
                 }
             });
             AlertDialog dialog = builder.create();
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
             dialog.show();
             coords[0] = (EditText) dialog.getWindow().findViewById(R.id.latitudeET);
             coords[1] = (EditText) dialog.getWindow().findViewById(R.id.longitudeET);
+            coords[0].setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+            coords[1].setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         }
     }
 
-    private void testAffixment() {
-        Location location = new Location("gps");
-        location.setLongitude(10.321138);
-        location.setLatitude(63.369010);
-        Bundle b = Util.readAffixmentFile(affixmentFile, this);
-        double startLatitude = b.getDouble("latitude");
-        double startLongitude = b.getDouble("longitude");
-        double scaleLat = b.getDouble("scaleLat");
-        double scaleLon = b.getDouble("scaleLon");
-        Point p = Util.getPositionOnMap(startLatitude, startLongitude, scaleLat, scaleLon, location);
-        Log.d("Odr", p.x +","+p.y);
+    @Override
+    void locationChanged(Location location) {
+        // do nothing
     }
+
 }

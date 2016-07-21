@@ -1,6 +1,7 @@
 package tk.parmclee.o_droid;
 
 import android.location.Criteria;
+import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
@@ -16,13 +17,15 @@ import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-public class MapActivity extends AppCompatActivity {
+abstract public class MapActivity extends AppCompatActivity {
 
     MapView mImage;
     RelativeLayout mLayout;
+    ImageView mSatImage;
     String mapPath;
     LocationManager locationManager;
     PowerManager powerManager;
@@ -57,7 +60,7 @@ public class MapActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
             finish();
-        } catch (IllegalArgumentException iae){
+        } catch (IllegalArgumentException iae) {
             Log.d("Odr", iae.getMessage());
             Toast.makeText(this, "Please turn on gps", Toast.LENGTH_SHORT).show();
         }
@@ -73,23 +76,54 @@ public class MapActivity extends AppCompatActivity {
         wakeLock.release();
     }
 
-    public void quit(View v){
-        if (locationManager != null)
+    public void quit(View v) {
+        removeGPS();
+        finish();
+    }
+
+    void removeGPS() {
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         try {
             locationManager.removeUpdates(locationListener);
             locationManager.removeGpsStatusListener(gpsStatusListener);
         } catch (SecurityException se) {
             se.printStackTrace();
+            Toast.makeText(this, "security exception", Toast.LENGTH_SHORT).show();
         }
-        finish();
     }
 
     GpsStatus.Listener gpsStatusListener = new GpsStatus.Listener() {
         @Override
         public void onGpsStatusChanged(int event) {
+            int satellites = 0;
+            for (GpsSatellite sat : locationManager.getGpsStatus(null).getSatellites()) {
+                if (sat.usedInFix()) satellites++;
+            }
+            if (mSatImage != null) {
+                mSatImage.setScaleType(ImageView.ScaleType.FIT_XY);
+                mSatImage.setVisibility(View.VISIBLE);
+                switch (satellites) {
+                    case 0:
+                        mSatImage.setImageResource(R.drawable.ic_power_sat_0);
+                        break;
+                    case 1:
+                        mSatImage.setImageResource(R.drawable.ic_power_sat_1);
+                        break;
+                    case 2:
+                        mSatImage.setImageResource(R.drawable.ic_power_sat_2);
+                        break;
+                    case 3:
+                        mSatImage.setImageResource(R.drawable.ic_power_sat_3);
+                        break;
+                    default:
+                        mSatImage.setVisibility(View.INVISIBLE);
+                        break;
+                }
+            }
             switch (event) {
                 case GpsStatus.GPS_EVENT_FIRST_FIX:
                     Log.d("Odr", "first fix");
+                    mImage.gpsFixed = true;
                     break;
                 case GpsStatus.GPS_EVENT_STARTED:
                     Log.d("Odr", "started");
@@ -99,6 +133,7 @@ public class MapActivity extends AppCompatActivity {
                     break;
                 case GpsStatus.GPS_EVENT_STOPPED:
                     Log.d("Odr", "stopped");
+                    mImage.gpsFixed = false;
                     break;
             }
         }
@@ -107,12 +142,13 @@ public class MapActivity extends AppCompatActivity {
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            Log.d("Odr", "location changed:"+location.getLatitude()+","+location.getLongitude());
+            Log.d("Odr", "location changed:" + location.getLatitude() + "," + location.getLongitude());
+            locationChanged(location);
         }
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            Log.d("Odr", provider + " status changed:"+status);
+            Log.d("Odr", provider + " status changed:" + status);
         }
 
         @Override
@@ -126,6 +162,7 @@ public class MapActivity extends AppCompatActivity {
         }
     };
 
+    abstract void locationChanged(Location location);
 
     class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         @Override
@@ -150,14 +187,7 @@ public class MapActivity extends AppCompatActivity {
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             float dx = -distanceX;
             float dy = -distanceY;
-            if ((mImage.mLeftTop.x - dx) < 0) dx = mImage.mLeftTop.x;
-            if ((mImage.mRightBottom.x - dx) > mImage.mMapSize.x)
-                dx = mImage.mRightBottom.x - mImage.mMapSize.x;
-            if ((mImage.mLeftTop.y - dy) < 0) dy = mImage.mLeftTop.y;
-            if ((mImage.mRightBottom.y - dy) > mImage.mMapSize.y)
-                dy = mImage.mRightBottom.y - mImage.mMapSize.y;
-            mImage.mMatrix.postTranslate(dx, dy);
-            mImage.transformCoords(mImage.mMatrix);
+            mImage.checkAndMove(dx, dy);
             mImage.invalidate();
             return true;
         }

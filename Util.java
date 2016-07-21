@@ -3,13 +3,16 @@ package tk.parmclee.o_droid;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -20,73 +23,56 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class Util {
-    final static float METERS_PER_LATITUDE_DEGREE = 111132.9556f,
-        METERS_PER_EQUATOR_LONGITUDE_DEGREE = 111319.491f;
-    final static float METERS_FROM_POLE_TO_EQUATOR = 90 * METERS_PER_LATITUDE_DEGREE;
-
-    static double metersPerLongitudeDegree(float latitude){
-        return METERS_PER_EQUATOR_LONGITUDE_DEGREE * parallelMultiplier(latitude);
-    }
-
-    /**
-     * Length of the parallel divided by the length of the equator
-     * @param latitude parallel latitude
-     * @return The number you must multiply equator length to get parallel length
-     */
-    static double parallelMultiplier(double latitude){
-        return (METERS_FROM_POLE_TO_EQUATOR - latitude) / METERS_FROM_POLE_TO_EQUATOR;
-    }
 
     /**
      * Calculates Earth radius
+     *
      * @param theta latitude degrees
      * @return Earth radius on theta latitude
      */
-    int r(double theta){
+    static long r(double theta) {
         double thetaRadians = theta * Math.PI / 180; // to radians
-        final long rEquatorSquared = Math.round(Math.pow(6378137, 2)),
-                rPoleSquared = Math.round(Math.pow(6356752, 2));
+        long r2 = Math.round(Math.pow(6378137, 2));     // equator radius squared
+        final double r2Relation = r2 / Math.pow(6356752, 2);  // divided by pole radius squared
         double cosSquared = Math.pow(Math.cos(thetaRadians), 2),
                 sinSquared = Math.pow(Math.sin(thetaRadians), 2);
-        return (int) Math.round(Math.sqrt(rEquatorSquared * rPoleSquared /
-                (rEquatorSquared * sinSquared + rPoleSquared * cosSquared)));
+        return Math.round(Math.sqrt(r2 / (r2Relation * sinSquared + cosSquared)));
     }
 
     /**
-     * Calculates coordinates of origin or current point
+     * Calculates coordinates of origin
+     *
      * @param location x - latitude, y - longitude
-     * @param point meters from the origin
-     * @param origin if true calculates coordinates of origin, false - current point
-     * @return pointF.x - latitude in degrees, pointF.y - longitude in degrees
+     * @param point    meters from the origin
+     * @return result.x - latitude in degrees, result.y - longitude in degrees
      */
-    PointF calculateGeoCoords(PointF location, Point point, boolean origin){
-        int r = r(location.x);
-        int sgn = 1;
-        if (origin) sgn = -1;
-        int x = point.x, y = point.y;
-        float theta = location.x,  phi = location.y;
+    static PointF calculateOrigin(PointF location, PointF point) {
+        long r = r(location.x);
+        float x = point.x, y = point.y;
+        float theta = location.x, phi = location.y;
         theta *= Math.PI / 180; // to radians
         phi *= Math.PI / 180;
-        double theta0 = theta - sgn * 2 * Math.asin(y / (2 * r));
-        double phi0 = phi + sgn * 2 * Math.asin(x / (2 * r * Math.cos(theta)));
+        double theta0 = theta + 2 * Math.asin(y / (2 * r));
+        double phi0 = phi - 2 * Math.asin(x / (r * (Math.cos(theta0) + Math.cos(theta))));
         // back to degrees
         return new PointF((float) (theta0 * 180 / Math.PI), (float) (phi0 * 180 / Math.PI));
     }
 
     /**
-     *
-     * @param location geographical coordinates, x - latitude, y - longitude
-     * @param origin geographical coordinates of the origin, x - latitude, y - longitude
+     * @param location geographical coordinates, x - latitude, y - longitude (degrees)
+     * @param origin   geographical coordinates of the origin, x - latitude, y - longitude (degrees)
      * @return point on map with coordinates in meters
      */
-    Point calculatePoint(PointF location, PointF origin){
+    static PointF calculatePoint(PointF location, PointF origin) {
         float theta = location.x;
-        int r = r(theta);
-        float deltaTheta = origin.x - location.x, deltaPhi = location.y - origin.y;
-        deltaTheta *= Math.PI / (180 * 2); // to radians and divide by 2
-        deltaPhi *= Math.PI / (180 * 2);
-        return new Point((int) Math.round(2 * r * Math.cos(theta) * Math.sin(deltaPhi)),
-                (int) Math.round(2 * r * Math.sin(deltaTheta)));
+        long r = r(theta);
+        Log.d("Odr", "r: " + r);
+        float theta0 = origin.x, deltaPhi = location.y - origin.y;
+        theta *= Math.PI / 180;  // to radians
+        theta0 *= Math.PI / 180;
+        deltaPhi *= Math.PI / (180 * 2); // to radians and divide by 2
+        return new PointF((float) (r * ((Math.cos(theta) + Math.cos(theta0)) * Math.sin(deltaPhi))),
+                (float) (2 * r * Math.sin((theta0 - theta) / 2)));
     }
 
     static Uri getMapStorageUri(Context context) {
@@ -119,62 +105,47 @@ public class Util {
                                PointF location2, PointF point2, File mapFile) {
         Bundle result = new Bundle();
         Bitmap bmp = BitmapFactory.decodeFile(mapFile.getAbsolutePath());
-        int width = bmp.getWidth();
-        int height = bmp.getHeight();
-        float lat1, lon1, lat2, lon2;
-        if (location1.y > location2.y){ // (lat1, lon1) - northern point
-             lat1 = location1.y;
-             lon1 = location1.x;
-             lat2 = location2.y;
-             lon2 = location2.x;
-        } else {
-             lat1 = location2.y;
-             lon1 = location2.x;
-             lat2 = location1.y;
-             lon2 = location1.x;
-        }
+        int width = bmp.getWidth(), height = bmp.getHeight();
+
+        PointF pointsDistanceMeters = calculatePoint(location1, location2);
+        Log.d("Odr", "pointsDistanceMeters: " + pointsDistanceMeters.x + "," + pointsDistanceMeters.y);
+
         float xDistance = point1.x - point2.x;
         float yDistance = point1.y - point2.y;
-        double scaleLatitudeDegrees = Math.abs((lat2 - lat1) / yDistance); //  degrees per pixel
-        // longitude substitution has meaning only on the one latitude
-        // so calculate degrees per pixel as it was on the equator
-        double scaleLongitudeEquator = Math.abs(
-                (lon2 / parallelMultiplier(lat2) - lon1 / parallelMultiplier(lat1)) / xDistance);
+        double scaleX = Math.abs(pointsDistanceMeters.x / xDistance); // meters per pixel
+        double scaleY = Math.abs(pointsDistanceMeters.y / yDistance);
+        Log.d("Odr", "scaleX: " + scaleX + ", scaleY: " + scaleY);
+        int quality = (int) Math.round(100 * Math.min(scaleX, scaleY) / Math.max(scaleX, scaleY));
+        double mpp = (scaleX + scaleY) / 2;
 
-        // left+top == west+north corner location
-        // pixels increase from top to bottom (opposite to latitude)
-        double latitude = lat1 + point1.y * scaleLatitudeDegrees;
-        // pixels increase from left to right (like longitude)
-        // to get longitude we need to "bring" map from equator
-        double longitude = (lon1 / parallelMultiplier(lat1) - point1.x * scaleLongitudeEquator)
-                * parallelMultiplier(latitude);
+        PointF point1meters = new PointF((float) (point1.x * mpp), (float) (point1.y * mpp));
+
+        PointF origin = calculateOrigin(location1, point1meters);
+        double latitude = origin.x, longitude = origin.y;
+        Log.d("Odr", "latitude: " + latitude + ", longitude: " + longitude);
+
         result.putInt("width", width);
         result.putInt("height", height);
-        result.putDouble("scaleLat", scaleLatitudeDegrees);
-        result.putDouble("scaleLon", scaleLongitudeEquator);
+        result.putDouble("meters per pixel", mpp);
+        result.putInt("quality", quality);
         result.putDouble("latitude", latitude);
         result.putDouble("longitude", longitude);
         return result;
     }
 
     static Point getPositionOnMap(double startLatitude, double startLongitude,
-                                  double scaleLat, double scaleLonEquator, Location location) {
-        double latitude = location.getLatitude();
-        double longitude = location.getLongitude();
-        // left+top == startL..itude
-        double latOffset = startLatitude - latitude;
-        // "bring" to equator
-        double lonOffset = longitude / parallelMultiplier(latitude) -
-                startLongitude / parallelMultiplier(startLatitude);
-
-        int y = (int) (latOffset / scaleLat);
-        int x = (int) (lonOffset / scaleLonEquator);
+                                  double mpp, Location location) {
+        PointF origin = new PointF((float) startLatitude, (float) startLongitude);
+        PointF current = new PointF((float) location.getLatitude(), (float) location.getLongitude());
+        PointF currentPointMeters = calculatePoint(current, origin);
+        int x = (int) (currentPointMeters.x / mpp);
+        int y = (int) (currentPointMeters.y / mpp);
         return new Point(x, y); //handle x,y < 0 or > w,h after return
     }
 
     static File createAffixmentFile(File file, Bundle data) {
         String fileName = file.getName();
-        String textFileName = fileName.substring(0, fileName.lastIndexOf(".")).concat(".txt");
+        String textFileName = affixFileName(fileName);
         File directory = file.getParentFile();
 
         String content = "AUTO-GENERATED FILE. Please don't modify this.\nThis file was generated "
@@ -185,16 +156,18 @@ public class Util {
         String latitude = "Left top corner latitude: " + data.getDouble("latitude");
         String longitude = "Left top corner longitude: " + data.getDouble("longitude");
         content += latitude + "\n" + longitude + "\n";
-        Double scaleLat = data.getDouble("scaleLat");
-        Double scaleLonEq = data.getDouble("scaleLon");
-        String latDegrees = "Latitude degrees per pixel: " + scaleLat;
-        String lonDegrees = "Longitude degrees per pixel \"on equator\": " + scaleLonEq;
-        content += latDegrees + "\n" + lonDegrees + "\n";
-        String quality = "Affixment quality: " + Math.round(100 * Math.min(2 * scaleLat, scaleLonEq)
-                                               / Math.max(scaleLonEq, 2 * scaleLat)) + " %";
-        content += quality + "\n";
+        Double mpp = data.getDouble("meters per pixel");
+        String latDegrees = "Meters per pixel: " + mpp;
+        content += latDegrees + "\n";
+        int quality = data.getInt("quality");
+        String qty = "Affixment quality: " + quality + " %";
+        content += qty + "\n";
 
         return createTextFile(Uri.fromFile(directory), textFileName, content);
+    }
+
+    static String affixFileName(String fileName) {
+        return fileName.substring(0, fileName.lastIndexOf(".")).concat(".txt");
     }
 
     static Bundle readAffixmentFile(File file, Context context) {
@@ -220,16 +193,36 @@ public class Util {
             line = br.readLine(); //longitude line
             String lon = line.substring(line.lastIndexOf(":") + 2);
             result.putDouble("longitude", Double.valueOf(lon));
-            line = br.readLine(); //latitude scale line
-            String scaleLat = line.substring(line.lastIndexOf(":") + 2);
-            result.putDouble("scaleLat", Double.valueOf(scaleLat));
-            line = br.readLine(); //longitude scale line
-            String scaleLon = line.substring(line.lastIndexOf(":") + 2);
-            result.putDouble("scaleLon", Double.valueOf(scaleLon));
+            line = br.readLine(); //scale line
+            String mpp = line.substring(line.lastIndexOf(":") + 2);
+            result.putDouble("meters per pixel", Double.valueOf(mpp));
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
         return result;
+    }
+
+    @SuppressWarnings("deprecation") // getWidth & getHeight have been changed to getSize
+    static Point getSizeInPxl(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Point size = new Point();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+            wm.getDefaultDisplay().getSize(size);
+        } else {
+            size.x = wm.getDefaultDisplay().getWidth();
+            size.y = wm.getDefaultDisplay().getHeight();
+        }
+        return size;
+    }
+
+    static PointF getSizeInCm(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        Point size = getSizeInPxl(context);
+        DisplayMetrics dm = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(dm);
+        final float CM_PER_INCH = 2.54f;
+        Log.d("Odr", "dm: " + dm);
+        return new PointF(CM_PER_INCH * size.x / dm.xdpi, CM_PER_INCH * size.y / dm.ydpi);
     }
 }

@@ -1,11 +1,14 @@
 package tk.parmclee.o_droid;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -13,7 +16,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 public class StartActivity extends AppCompatActivity {
 
@@ -36,9 +38,23 @@ public class StartActivity extends AppCompatActivity {
         initialize(compete, R.drawable.competition);
         initialize(affix, R.drawable.affix);
         sStorageUri = Util.getMapStorageUri(getApplicationContext());
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(
+                getApplicationContext());
+        String width = preferences.getString("screen_width", null);
+        String height = preferences.getString("screen_height", null);
+        PointF screenSize;
+        try {
+            Float.parseFloat(width);
+            Float.parseFloat(height);
+        } catch (NullPointerException | NumberFormatException npe) {
+            screenSize = Util.getSizeInCm(this);
+            preferences.edit().putString("screen_width", Float.toString(10 * screenSize.x))
+                    .putString("screen_height", Float.toString(10 * screenSize.y)).apply();
+        }
     }
 
-    private void initialize(ImageView view, int id){
+    private void initialize(ImageView view, int id) {
         view.setOnClickListener(listener);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.RGB_565;
@@ -52,7 +68,7 @@ public class StartActivity extends AppCompatActivity {
         public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), MapList.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-            switch (v.getId()){
+            switch (v.getId()) {
                 case R.id.explore:
                     intent.putExtra("type", "explore");
                     startActivity(intent);

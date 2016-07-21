@@ -30,14 +30,17 @@ public class MapList extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_list);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayShowHomeEnabled(true);
+        }
 
         File mapStorage = new File(StartActivity.sStorageUri.getPath());
         File maps[] = mapStorage.listFiles(filterMime("image/jpeg", "image/png", "image/gif"));
-        int quantity = maps.length;
         File affixments[] = mapStorage.listFiles(filterMime("text/plain"));
         ArrayList<String> affixNames = new ArrayList<>(affixments.length);
-        for (int i = 0; i < quantity; i++) affixNames.add(reduceExtension(affixments[i].getName()));
-        ArrayList<Map<String, String>> data = new ArrayList<>(quantity);
+        for (File affixment : affixments) affixNames.add(reduceExtension(affixment.getName()));
+        ArrayList<Map<String, String>> data = new ArrayList<>(maps.length);
         Map<String, String> map;
         for (File mapFile : maps) {
             map = new HashMap<>();
@@ -90,22 +93,34 @@ public class MapList extends AppCompatActivity {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             switch (whatNext) {
                 case "affixment":
-                    Intent intent = new Intent(getApplicationContext(), AffixmentActivity.class);
-                    TextView tv = (TextView) view.findViewById(R.id.text1);
-                    String path = Util.getMapStorageUri(getApplicationContext()).getPath() +
-                            "/" + tv.getText();
-                    intent.putExtra("mapPath", path);
-                    startActivity(intent);
-                    Log.d("Odr", "Path " + path);
+                    goNext(AffixmentActivity.class, view);
                     break;
                 case "competition":
+                    goNext(CreateRouteActivity.class, view);
                     break;
                 case "explore":
+                    goNext(ExploreActivity.class, view);
                     break;
                 default:
             }
         }
     };
+
+    void goNext(Class<?> cls, View view) {
+        TextView tv2 = (TextView) view.findViewById(R.id.text2);
+        if (tv2.getText() == getString(R.string.affix_not_exist) && cls != AffixmentActivity.class) {
+            Toast.makeText(this, getString(R.string.affix_not_exist), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent intent = new Intent(getApplicationContext(), cls);
+        TextView tv = (TextView) view.findViewById(R.id.text1);
+        String path = Util.getMapStorageUri(getApplicationContext()).getPath() +
+                "/" + tv.getText();
+        intent.putExtra("mapPath", path);
+        if (cls == CreateRouteActivity.class) intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        startActivity(intent);
+        Log.d("Odr", "Path " + path);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -119,7 +134,14 @@ public class MapList extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Toast.makeText(this, "yes", Toast.LENGTH_SHORT).show();
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                break;
+            default:
+                Intent intent = new Intent(getApplicationContext(), Preferences.class);
+                startActivity(intent);
+        }
         return true;
     }
 }
