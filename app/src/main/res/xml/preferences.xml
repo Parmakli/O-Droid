@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:key="compass"
+        android:title="@string/compass"
+        android:checked="false"/>
+    <PreferenceCategory android:title="@string/map">
+        <CheckBoxPreference
+            android:key="scroll"
+            android:summary="@string/scrolling_summary"
+            android:title="@string/scrolling" />
+        <ListPreference
+            android:entries="@array/scales"
+            android:entryValues="@array/scaleFactors"
+            android:key="scale"
+            android:summary="@string/scale_summary"
+            android:title="@string/scale"
+            android:defaultValue="100"/>
+        <CheckBoxPreference
+            android:key="track_dialog"
+            android:summary="@string/track_summary"
+            android:title="@string/track_title"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/colors">
+        <ListPreference
+            android:entries="@array/color_list"
+            android:entryValues="@array/colores"
+            android:key="track_color"
+            android:title="@string/track"
+            android:defaultValue="red"/>
+        <ListPreference
+            android:entries="@array/color_list"
+            android:entryValues="@array/colores"
+            android:key="CP_color"
+            android:title="@string/cp"
+            android:defaultValue="red"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/screen">
+        <EditTextPreference
+            android:key="screen_width"
+            android:title="@string/width"
+            android:inputType="numberDecimal"/>
+        <EditTextPreference
+            android:key="screen_height"
+            android:title="@string/height"
+            android:inputType="numberDecimal"/>
+    </PreferenceCategory>
+    <EditTextPreference
+        android:key="precision"
+        android:title="@string/precision"
+        android:inputType="numberDecimal"/>
+</PreferenceScreen>

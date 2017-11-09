@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="affix">Привязка карты</string>
+    <string name="affix_exist">Есть файл привязки </string>
+    <string name="affix_not_exist">Файл привязки отсутствует</string>
+    <string name="cancel">Отмена</string>
+    <string name="colors">Цвета</string>
+    <string name="comptete">Соревнование</string>
+    <string name="coords">Координаты</string>
+    <string name="cp">Контрольные пункты</string>
+    <string name="explore">Тренировка</string>
+    <string name="hard">Профессионал</string>
+    <string name="hard_description">Показывать только карту и дистанцию</string>
+    <string name="height">Высота(мм)</string>
+    <string name="latitude">Широта</string>
+    <string name="longitude">Долгота</string>
+    <string name="map">Карта</string>
+    <string name="medium">Любитель</string>
+    <string name="medium_description">Центрировать карту по вашему положению</string>
+    <string name="no_data">Нет карт в папке O-Droid Maps</string>
+    <string name="no_file">Нет файла привязки</string>
+    <string name="no_route">Длинное нажатие для привязки</string>
+    <string name="options">Настройки</string>
+    <string name="orienteering_map">Спортивная карта</string>
+    <string name="quit">Выход</string>
+    <string name="sat">Спутник</string>
+    <string name="scale">Масштаб</string>
+    <string name="scale_summary">Установить масштаб</string>
+    <string name="track_summary">Диалог сохраниения .gpx трека</string>
+    <string name="track_title">GPX диалог</string>
+    <string name="screen">Экран</string>
+    <string name="scrolling">Прокрутка</string>
+    <string name="scrolling_summary">Позволяет двигать карту</string>
+    <string name="compass">Компас</string>
+    <string name="simple">Новичок</string>
+    <string name="simple_description">Показывать вашу позицию и трек</string>
+    <string name="start">Старт</string>
+    <string name="success_1_point">Первая точка привязана</string>
+    <string name="success_2_point">Вторая точка привязана</string>
+    <string name="success_affixment">Карта привязана. Качество</string>
+    <string name="track">Трек</string>
+    <string name="track_off">Трек ВЫКЛ</string>
+    <string name="track_on">Трек ВКЛ</string>
+    <string name="width">Ширина(мм)</string>
+    <string name="wrong_coord">Неверный ввод\nПример: 44.964037</string>
+    <string name="precision">Радиус взятия КП(м)</string>
+    <string name="storage_permissions">Не предоставлен доступ к карте памяти</string>
+    <string name="location_permissions">Не предоставлен доступ к gps</string>
+    <string name="save_track">Сохранить .gpx трек?</string>
+    <string name="gpx_saved">Gpx-трек сохранен в</string>
+    <string name="find_map">Найти загруженные карты</string>
+    <string name="choose_photo">Выберите изображение</string>
+    <string name="track_saved">Трек сохранен успешно</string>
+    <string name="close">Закрыть</string>
+    <string name="cannot_open_explorer">Не удалось открыть менеджер файлов</string>
+    <string name="show_in_folder">Показать в папке</string>
+    <string name="no">Нет</string>
+    <string name="yes">Да</string>
+    <string-array name="scales">
+        <item>1 : 40 000</item>
+        <item>1 : 50 000</item>
+        <item>1 : 75 000</item>
+        <item>1 : 100 000</item>
+        <item>Изменяемый</item>
+    </string-array>
+    <string-array name="scaleFactors">
+        <item>40</item>
+        <item>50</item>
+        <item>75</item>
+        <item>100</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="color_list">
+        <item>Красный</item>
+        <item>Зелёный</item>
+        <item>Синий</item>
+        <item>Чёрный</item>
+    </string-array>
+    <string-array name="colores">
+        <item>red</item>
+        <item>green</item>
+        <item>blue</item>
+        <item>black</item>
+    </string-array>
+</resources>

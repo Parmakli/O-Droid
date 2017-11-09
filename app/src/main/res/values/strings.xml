@@ -1,0 +1,88 @@
+<resources>
+    <string name="app_name" translatable="false">O-Droid</string>
+    <string name="orienteering_map">Orienteering map</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="example_latitude" translatable="false">44.964037</string>
+    <string name="example_longitude" translatable="false">34.099528</string>
+    <string name="coords">Coordinates</string>
+    <string name="ok" translatable="false">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="wrong_coord">Wrong input\nSample: 44.964037</string>
+    <string name="success_1_point">First point affixed</string>
+    <string name="success_2_point">Second point affixed</string>
+    <string name="success_affixment">Map affixed. Quality</string>
+    <string name="no_file">No affixment file</string>
+    <string name="explore">Training</string>
+    <string name="comptete">Competition</string>
+    <string name="affix">Map affixment</string>
+    <string name="options">Settings</string>
+    <string name="affix_exist">Affixment file exists</string>
+    <string name="affix_not_exist">Affixment file is absent</string>
+    <string name="no_data">No maps in O-Droid directory</string>
+    <string name="quit">quit</string>
+    <string name="track_on">Track ON</string>
+    <string name="track_off">Track OFF</string>
+    <string name="map">Map</string>
+    <string name="screen">Screen</string>
+    <string name="colors">Colors</string>
+    <string name="track">Track</string>
+    <string name="cp">Control points</string>
+    <string name="width">Width(mm)</string>
+    <string name="height">Height(mm)</string>
+    <string name="scrolling">Dragging</string>
+    <string name="scrolling_summary">Allow to drag map</string>
+    <string name="scale">Scale</string>
+    <string name="scale_summary">Set natural scale</string>
+    <string name="track_summary">Ask to save .gpx track</string>
+    <string name="compass">Compass</string>
+    <string name="track_title">GPX dialog</string>
+    <string name="sat">satellite</string>
+    <string name="start">Start</string>
+    <string name="simple">Simple</string>
+    <string name="simple_description">Show your position and track</string>
+    <string name="medium">Medium</string>
+    <string name="medium_description">Center map by your location</string>
+    <string name="hard">Hard</string>
+    <string name="hard_description">Show only map and route</string>
+    <string name="no_route">Long press to set point</string>
+    <string name="precision">Radius of taking CP(m)</string>
+    <string name="storage_permissions">Allow storage permission</string>
+    <string name="location_permissions">Allow location permission</string>
+    <string name="save_track">Save .gpx track?</string>
+    <string name="gpx_saved">Gpx track saved to</string>
+    <string name="find_map">Find downloaded maps</string>
+    <string name="choose_photo">Choose photo</string>
+    <string name="track_saved">Track saved successfully</string>
+    <string name="close">Close</string>
+    <string name="cannot_open_explorer">Can\'t open File Browser</string>
+    <string name="show_in_folder">Show in folder</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
+    <string-array name="scales">
+        <item>1 : 40 000</item>
+        <item>1 : 50 000</item>
+        <item>1 : 75 000</item>
+        <item>1 : 100 000</item>
+        <item>Mutable</item>
+    </string-array>
+    <string-array name="scaleFactors">
+        <item>40</item>
+        <item>50</item>
+        <item>75</item>
+        <item>100</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="color_list">
+        <item>Red</item>
+        <item>Green</item>
+        <item>Blue</item>
+        <item>Black</item>
+    </string-array>
+    <string-array name="colores">
+        <item>red</item>
+        <item>green</item>
+        <item>blue</item>
+        <item>black</item>
+    </string-array>
+</resources>

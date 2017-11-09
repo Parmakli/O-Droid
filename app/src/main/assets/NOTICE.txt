@@ -1,0 +1,8 @@
+Android Code
+
+Copyright 2005-2016 The Android Open Source Project
+
+
+This product includes software developed as part of
+
+The Android Open Source Project (http://source.android.com).
