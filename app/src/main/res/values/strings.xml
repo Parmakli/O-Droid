@@ -59,6 +59,9 @@
     <string name="show_in_folder">Show in folder</string>
     <string name="no">No</string>
     <string name="yes">Yes</string>
+    <string name="info">Use conditions</string>
+    <string name="conditions">Use conditions\n\nApplication is provided "as is", without warranty of any kind\n\nUser undertake:\n\n1. Not to use this application in any kind of orienteering competition (this app was created for training purposes of increasing orienteering skills and not to have advantage during competition)\n\n2. To use this application at his discretion but not breaking the effective low
+</string>
     <string-array name="scales">
         <item>1 : 40 000</item>
         <item>1 : 50 000</item>

@@ -34,6 +34,7 @@
             android:screenOrientation="nosensor"/>
         <activity android:name=".CompetitionActivity"
             android:screenOrientation="nosensor"/>
+        <activity android:name=".UseConditionsActivity"/>
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="e9bca97b3a4e6c0afe0b8138a0edbac2e94e9683" />
